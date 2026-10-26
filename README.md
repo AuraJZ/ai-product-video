@@ -39,8 +39,8 @@ ai-product-video/
 
 1. 安装 [Claude Code](https://docs.claude.com/en/docs/claude-code) 和 [uv](https://docs.astral.sh/uv/)。
 2. 把整个 `ai-product-video` 文件夹放进 Claude Code 的 skills 目录，用户级就是 `~/.claude/skills/ai-product-video/`。
-   - macOS / Linux：`git clone <repo> ~/.claude/skills/ai-product-video`
-   - Windows：`git clone <repo> %USERPROFILE%\.claude\skills\ai-product-video`
+   - macOS / Linux：`git clone https://github.com/AuraJZ/ai-product-video.git ~/.claude/skills/ai-product-video`
+   - Windows：`git clone https://github.com/AuraJZ/ai-product-video.git %USERPROFILE%\.claude\skills\ai-product-video`
 3. 重启 Claude Code。之后说「帮我给这款产品做一支 15 秒的竖版广告」「用 AI 做一支产品演示片」这类话，skill 会被自动调用。
 
 可选准备：
