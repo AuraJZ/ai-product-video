@@ -1,10 +1,10 @@
 # ai-product-video：用 AI 给实体产品做视频
 
-一个 [Claude Code](https://docs.claude.com/en/docs/claude-code) skill。它把"3D 预演定位 → 图像模型画关键帧 → 视频模型生成镜头 → 代码剪辑、字幕、配乐、混音 → 多版本交付"这套流程，整理成 Claude 可以照着执行的方法、模板和脚本。
+一个 AI 编程助手的 skill，**同时支持 [Claude Code](https://docs.claude.com/en/docs/claude-code) 和 [Codex](https://developers.openai.com/codex)**（两者用同一套开放的 Agent Skills 格式）。它把"3D 预演定位 → 图像模型画关键帧 → 视频模型生成镜头 → 代码剪辑、字幕、配乐、混音 → 多版本交付"这套流程，整理成 AI 助手可以照着执行的方法、模板和脚本。
 
 适用于**实体产品**的视频：产品功能演示片、品牌广告（15/30/60 秒）、抖音、小红书、视频号等竖版短视频、电商主图视频、发布会和路演短片。纯剧情短剧、MV、动画等没有实体产品的视频不适用。
 
-> English summary: a Claude Code skill for making AI-generated videos of physical products (explainers, ads, vertical social videos, e-commerce clips, launch films). It encodes a hybrid pipeline: 3D previs (optional) locks layout and scale; an image model paints photoreal keyframes on top; a video model animates first/last frames from per-second scripts; a code-driven EDL editor adds transitions, captions, leader-line callouts and cards; music and SFX are mixed by measurement. Documentation is in Simplified Chinese; scripts are cross-platform Python run with `uv`.
+> English summary: an Agent Skill for Claude Code and Codex for making AI-generated videos of physical products (explainers, ads, vertical social videos, e-commerce clips, launch films). It encodes a hybrid pipeline: 3D previs (optional) locks layout and scale; an image model paints photoreal keyframes on top; a video model animates first/last frames from per-second scripts; a code-driven EDL editor adds transitions, captions, leader-line callouts and cards; music and SFX are mixed by measurement. Documentation is in Simplified Chinese; scripts are cross-platform Python run with `uv`.
 
 ## 它解决什么问题
 
@@ -37,11 +37,48 @@ ai-product-video/
 
 ## 安装
 
-1. 安装 [Claude Code](https://docs.claude.com/en/docs/claude-code) 和 [uv](https://docs.astral.sh/uv/)。
-2. 把整个 `ai-product-video` 文件夹放进 Claude Code 的 skills 目录，用户级就是 `~/.claude/skills/ai-product-video/`。
-   - macOS / Linux：`git clone https://github.com/AuraJZ/ai-product-video.git ~/.claude/skills/ai-product-video`
-   - Windows：`git clone https://github.com/AuraJZ/ai-product-video.git %USERPROFILE%\.claude\skills\ai-product-video`
-3. 重启 Claude Code。之后说「帮我给这款产品做一支 15 秒的竖版广告」「用 AI 做一支产品演示片」这类话，skill 会被自动调用。
+先装好 [uv](https://docs.astral.sh/uv/)（脚本都用它运行），再按你用的 AI 编程助手选一种方式。
+
+### 方式一：一键安装（推荐）
+
+```bash
+git clone https://github.com/AuraJZ/ai-product-video.git
+cd ai-product-video
+./install.sh all          # macOS / Linux；只装一个就写 claude 或 codex
+```
+
+Windows 用 PowerShell：
+
+```powershell
+git clone https://github.com/AuraJZ/ai-product-video.git
+cd ai-product-video
+powershell -ExecutionPolicy Bypass -File .\install.ps1 all     # 只装一个就写 claude 或 codex
+```
+
+脚本会把 skill 复制到：
+
+| 工具 | 安装位置 |
+|---|---|
+| Claude Code | `~/.claude/skills/ai-product-video/` |
+| Codex | `~/.agents/skills/ai-product-video/` |
+
+以后更新：在 clone 下来的文件夹里 `git pull`，再运行一次安装脚本。
+
+### 方式二：直接 clone 到对应位置
+
+- Claude Code：`git clone https://github.com/AuraJZ/ai-product-video.git ~/.claude/skills/ai-product-video`
+- Codex：`git clone https://github.com/AuraJZ/ai-product-video.git ~/.agents/skills/ai-product-video`
+
+Windows 把 `~` 换成 `%USERPROFILE%`。只想在某个项目里用，也可以放进项目的 `.claude/skills/`（Claude Code）或 `.agents/skills/`（Codex）。
+
+### 方式三：在 Codex 里让它自己装
+
+在 Codex 里输入 `$skill-installer`，让它从 `https://github.com/AuraJZ/ai-product-video` 安装这个 skill。
+
+### 怎么用
+
+- **Claude Code**：重启后，说「帮我给这款产品做一支 15 秒的竖版广告」「用 AI 做一支产品演示片」这类话，skill 会被自动调用。
+- **Codex**：一般会自动识别；如果没有，就在对话里输入 `$ai-product-video` 显式调用。新装的 skill 没出现时，重启 Codex。
 
 可选准备：
 
