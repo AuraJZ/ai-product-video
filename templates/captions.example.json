@@ -1,0 +1,32 @@
+{
+ "_doc": "字幕与卡片模板：复制成项目的 edit/captions.json，由 edit/edl.json 的 captions_file 指向。zh = 主行（任何语言），en = 小号大写副行；'轻｜...' 竖线前的字是频道字。offset 从镜头入点那一帧算起（trimmed）。字段说明见 scripts/edl_editor/README.md 第 5 节，完整样式默认值见 typeset.py 的 DEFAULT_STYLE（默认色板和字体只是占位，换成品牌自己的）。AI 标识：开头一条 ai_label_open（role label，至少约 2 秒），结尾说明写一次：有片尾卡就写在卡的 note 里，以产品镜头收尾就用 end_note 字幕；上传时再勾选平台的 AI 声明；EDL 的 label 角标默认不用。规则见 references/09-compliance.md 第 4.2 节。",
+ "offset_basis": "trimmed",
+ "style": {
+  "preset": "feed_safe",
+  "min_gap_s": 0.6,
+  "cards": {"channel_chars": ""},
+  "_style_note": "只写要改的键。feed_safe 只改竖屏：字幕、角标和片尾卡小字放进竖版保守安全框（x 65–888，y 288–1248，references/02-formats.md 第 5 节），--dry 逐条检查是否出框；横屏不受影响。多个整片预设写成列表，例：\"preset\": [\"feed_safe\", \"latin\"]。只改竖屏某个位置：\"portrait\": {\"positions\": {...}}"
+ },
+ "cards": [
+  {"id": "title", "style": "title", "mark": "PRODUCT", "zh": "产品名 · 一句话定位", "en": "One-line positioning"},
+  {"id": "end", "style": "end", "mark": "PRODUCT", "zh": "一句收尾的话", "en": "example.com",
+   "note": "画面由 AI 生成 · 部分功能为视觉示意\nAI-generated footage · some features shown for illustration"}
+ ],
+ "captions": [
+  {"id": "ai_label_open", "anchor": "title", "offset": 0.0, "dur": 2.2, "role": "label",
+   "zh": "本片含 AI 生成内容", "emph": ["本片含 AI 生成内容"], "pos": "upper_left", "ink": "light",
+   "_note": "开头的 AI 标识：至少约 2 秒，字高约为画面短边的 5%（emph 层），放在安全区内，不压产品。片子以镜头开场时，把 anchor 改成第一个镜头的 id，和那个镜头的字幕分放在画面两端。role label：不算阅读字幕，不参与字幕间隔和长度检查，风险词检查照做"},
+  {"id": "S01_hold", "anchor": "S01", "offset": 0.7, "dur": 2.8,
+   "zh": "轻｜单手就能拿起", "en": "Light enough for one hand", "emph": ["单手"],
+   "pos": "lower_left", "ink": "light",
+   "_note": "放在画面安静处，不压产品；亮底时自动加暗底，也可改 ink: dark"},
+  {"id": "S02_carry", "anchor": "S02", "offset": 0.4, "dur": 2.8, "preset": "latin",
+   "zh": "Built for everyday carry", "en": "Product name", "emph": ["everyday carry"], "en_emph": ["Product name"],
+   "pos": "lower_right", "ink": "light", "portrait": {"pos": "upper_center"},
+   "_note": "拉丁字母主行用 preset latin；竖屏改到上方居中"},
+  {"id": "end_note", "anchor": "S03", "offset": 0.5, "dur": 3.0, "preset": "note", "role": "note",
+   "zh": "画面由 AI 生成 · 部分功能为视觉示意", "en": "AI-generated footage · some features shown for illustration",
+   "pos": "lower_center", "skip": true,
+   "_note": "以产品镜头收尾、没有片尾卡时的 AI 说明小字：删掉 skip，anchor 改成最后一个镜头，offset 让它在镜头结束前完整停留约 2 秒以上。preset note = 小号 Light 字，role note = 不算阅读字幕。有片尾卡时用卡的 note，不要两处都写"}
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "_doc": "关键帧清单模板：复制成项目的 keyframes/keyframes.json（规则见 references/04-keyframes.md 第 3 节）。每张要画的图一条：母版（role master）先画、先过检查点，再画镜头的首帧、尾帧。id 写法 <镜头>-K<秒数>，秒数按生成片段的时钟（镜头表的 gen_duration）。uploads 是上传顺序：图1 永远是底图（3D 底图、2D 合成底图或实拍代理照片），然后是母版和同镜头已画好的前一帧。项目自己的出图包脚本从这里生成 packs/，scripts/qc/normalise_keyframes.py 从这里读 role（母版和参考图只缩不裁）。示例是虚构的保温杯竖版广告，开工时替换。",
+ "look_bible": "packs/look_bible.txt",
+ "aspect": "9:16",
+ "keyframes": [
+  {"id": "M1", "role": "master", "shot": null,
+   "purpose": "Product master: the bottle on a neutral grey background, front three-quarter view, lid closed, display off",
+   "person": "none", "fx": {"display_on": false},
+   "uploads": ["brief/refs/product_sheet.png"],
+   "save_as": "keyframes/raw/M1.png", "depends_on": [],
+   "_note": "产品母版：每件产品一张，中性灰底。没有 3D 时 uploads 放产品参考表（实物照片、CAD 渲染，或按草图和规格做的参考表，见 references/03-previs.md 第 10.1 节）"},
+  {"id": "R1", "role": "master", "shot": null,
+   "purpose": "Scene master: the office desk by the window, morning light, no product, no people",
+   "person": "none", "fx": {},
+   "uploads": ["plates/R1/plate.png"],
+   "save_as": "keyframes/raw/R1.png", "depends_on": [],
+   "_note": "场景母版：片中用到的每个地点、每个时段各一张"},
+  {"id": "S01-K00", "role": "first", "shot": "S01", "t": 0.0,
+   "purpose": "Close-up of the lid, display off, before the finger touches it",
+   "person": "none", "fx": {"display_on": false},
+   "uploads": ["plates/S01-K00/plate.png", "keyframes/norm/M1.png", "keyframes/norm/R1.png"],
+   "save_as": "keyframes/raw/S01-K00.png", "depends_on": ["M1", "R1"]},
+  {"id": "S01-K04", "role": "last", "shot": "S01", "t": 4.0,
+   "purpose": "Same framing after a 6% push-in, display showing the water temperature in white",
+   "person": "none", "fx": {"display_on": true},
+   "uploads": ["plates/S01-K04/plate.png", "keyframes/norm/M1.png", "keyframes/norm/R1.png",
+               "keyframes/norm/S01-K00.png"],
+   "save_as": "keyframes/raw/S01-K04.png", "depends_on": ["S01-K00"],
+   "_note": "尾帧上传同镜头已画好的首帧，保证光线、颜色和产品细节一致，只有显示屏状态不同"}
+ ]
+}

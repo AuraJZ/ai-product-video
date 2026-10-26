@@ -1,0 +1,16 @@
+{
+ "_doc": "引线标注模板：复制成项目的 edit/callouts.json，由 edit/edl.json 的 callouts_file 指向。每个组（这里是 S03）由镜头的 \"callouts\": \"S03\" 引用。anchor_xy = 部件上的点，label_xy = 引线终点，都是 0-1、相对素材画面，在批准版本的定格帧上量。at / end 用镜头时钟：素材秒数，过了 out 继续数进定格。字段说明见 scripts/edl_editor/README.md 第 6 节。外观部件可以标；爆炸图、剖视图和内部部件的标注只放内部版（投资人版），公开版不做，见 references/09-compliance.md 第 7 节。",
+ "_style": {},
+ "S03": {
+  "at": 2.5, "stagger": 0.35, "fade_out": 0.5,
+  "items": [
+   {"id": "lid", "order": 1, "anchor_xy": [0.56, 0.29], "label_xy": [0.68, 0.22],
+    "zh": "顶盖", "fn": "一体成型", "en": "Top cover"},
+   {"id": "button", "order": 2, "anchor_xy": [0.50, 0.475], "label_xy": [0.68, 0.475],
+    "zh": "按键", "fn": "单键操作", "en": "One button"},
+   {"id": "base", "order": 3, "anchor_xy": [0.43, 0.77], "label_xy": [0.30, 0.70],
+    "zh": "底座", "fn": "硅胶脚垫", "en": "Silicone feet",
+    "todo": "位置是估计值：在批准版本上重新量过后删掉这个键"}
+  ]
+ }
+}

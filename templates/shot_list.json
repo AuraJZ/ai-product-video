@@ -1,0 +1,359 @@
+{
+  "_about": "镜头表模板，复制成项目的 shots/shot_list.json。shots 是全片时间轴的唯一来源：剪辑、出图提示词、视频提示词、音效都从这里读镜头顺序和时长；字幕在这里只是草稿，定稿在 edit/captions.json。_shot_schema 是单个镜头的 JSON Schema（draft 2020-12），用来校验 shots 里的每一项；各字段的含义写在它的 description 里。示例是一支虚构的 20 秒竖屏广告（智能保温杯），开工时整体替换。镜头 id 一旦定下就不再改，调整顺序只挪数组里的位置。",
+  "project": {
+    "title": "X1 smart bottle - feed ad 20s",
+    "video_type": "ad",
+    "aspect": "9:16",
+    "resolution": [1080, 1920],
+    "fps": 24,
+    "target_duration": 20.0,
+    "languages": ["zh"],
+    "facts_file": "brief/product_facts.md",
+    "brief_file": "brief/creative_brief.md",
+    "sfx_file": "sound/sfx_cue_sheet.md"
+  },
+  "_shot_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "shot",
+    "type": "object",
+    "required": ["id", "beat", "audience", "duration", "mode", "pixel_source", "transition_in", "caption", "sfx"],
+    "allOf": [
+      {
+        "if": {"properties": {"mode": {"enum": ["first_last", "first", "ref"]}}},
+        "then": {"required": ["gen_duration"]}
+      },
+      {
+        "if": {"properties": {"mode": {"const": "card"}}},
+        "else": {"required": ["camera", "action", "effect", "product_state", "keyframes"]}
+      }
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_-]*$",
+        "description": "镜头 id，全片唯一。文件名、批准账本、提示词都用它，定下后不再改。"
+      },
+      "beat": {
+        "type": "string",
+        "description": "这个镜头在故事里的作用，例如 hook（抓人）、reveal（亮相）、feature（功能）、proof（证明）、lifestyle（使用场景）、system（整体）、end（片尾）。可以自定义。"
+      },
+      "audience": {
+        "type": "string",
+        "enum": ["public", "internal"],
+        "description": "public = 公开版和内部版都用；internal = 只进内部版（投资人版），例如爆炸图、剖视图、内部部件标注。公开版的 EDL 只取 public 的镜头（references/09-compliance.md 第 7 节）。"
+      },
+      "duration": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "description": "在成片里占的时长，秒（剪辑后的长度）。"
+      },
+      "gen_duration": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "向视频模型请求的生成时长，秒：不短于模型的最短时长（核对日期见 references/05-video-gen.md 第 14 节），通常比 duration 多约 1 秒，剪辑时再裁。first_last / first / ref 必填。关键帧 id 里的秒数按这条生成片段的时钟算。"
+      },
+      "pixel_source": {
+        "type": "string",
+        "enum": ["keyframe_video", "edit_layer", "footage", "cad_render"],
+        "description": "最终像素从哪来（references/03-previs.md 第 1 节）：keyframe_video = 图像模型画的关键帧 + 视频模型（默认）；edit_layer = 剪辑层的字卡或图形；footage = 实拍、录屏、真实界面；cad_render = 直接用 CAD / 3D 渲染，只用于要看清内部几何的技术镜头（爆炸图、剖视、机构动作），一般只进内部版。"
+      },
+      "camera": {
+        "type": "object",
+        "required": ["framing", "move"],
+        "properties": {
+          "framing": {
+            "type": "string",
+            "description": "景别、角度和构图，例如 close-up, 30deg above, product centered。"
+          },
+          "move": {
+            "type": "string",
+            "enum": ["static", "push_in", "pull_out", "pan_left", "pan_right", "tilt_up", "tilt_down", "orbit_left", "orbit_right", "track", "handheld"],
+            "description": "每个镜头只用一种慢速、单方向的运镜。"
+          },
+          "amount": {
+            "type": "string",
+            "description": "运镜的量，写数字，例如 8% 或 10deg。推拉一般不超过 10%，环绕一般不超过 15 度。"
+          },
+          "speed": {
+            "type": "string",
+            "enum": ["very_slow", "slow", "medium"]
+          }
+        }
+      },
+      "action": {
+        "type": "string",
+        "description": "画面里谁在做什么，按时间顺序写摄影机看得到的动作。首帧里没有的东西，不要在运动中露出来。"
+      },
+      "effect": {
+        "type": ["object", "null"],
+        "description": "本镜演示的产品功能效果；没有就写 null。",
+        "required": ["feature", "source_part", "looks_like", "not"],
+        "properties": {
+          "feature": {
+            "type": "string",
+            "description": "brief/product_facts.md 里的功能编号，例如 F1。用来检查每个功能都有镜头。"
+          },
+          "source_part": {
+            "type": "string",
+            "description": "真正产生这个效果的部件。画面只展示这个部件。"
+          },
+          "looks_like": {
+            "type": "string",
+            "description": "摄影机拍到的样子。不写发光、光晕、科技感这类空词。"
+          },
+          "not": {
+            "type": "string",
+            "description": "不是什么、别画成什么。"
+          },
+          "timing": {
+            "type": "string",
+            "description": "效果在生成片段里的起止时间，例如 1.0-3.0s。"
+          }
+        }
+      },
+      "product_state": {
+        "type": "object",
+        "required": ["start", "end"],
+        "description": "本镜开头和结尾时，产品各部分的状态（灯开关、屏幕内容、盖子开合等）。首帧、尾帧关键帧必须分别符合 start 和 end；上一镜的 end 和下一镜的 start 要连得上。",
+        "properties": {
+          "start": {"type": "object"},
+          "end": {"type": "object"}
+        }
+      },
+      "keyframes": {
+        "type": "array",
+        "description": "本镜要用的关键帧。role: first 首帧、last 尾帧、mid 中间帧、ref 参考图。id 按 <镜头>-K<秒数> 写，秒数是生成片段（gen_duration）里的时间：S01-K00 = 第 0 秒，S01-K04 = 4 秒生成片段的尾帧，S02-K035 = 第 3.5 秒。和 keyframes/keyframes.json、keyframes/ 里的文件名一致。footage 镜头可以是空列表。",
+        "items": {
+          "type": "object",
+          "required": ["id", "role", "source"],
+          "properties": {
+            "id": {"type": "string"},
+            "role": {"type": "string", "enum": ["first", "last", "mid", "ref"]},
+            "source": {
+              "type": "string",
+              "enum": ["image_on_plate", "image_on_proxy", "image_from_keyframe", "image_free", "render", "photo", "screenshot", "previous_shot"],
+              "description": "image_on_plate = 图像模型在 3D 底图上重画；image_on_proxy = 无 3D 路线：图像模型在 2D 合成底图或实拍代理照片上重画（出图包用 look_bible.md 的无 3D 第 2 条和对应的纠正话）；image_from_keyframe = 没有底图的补拍镜头，以一张已批准的关键帧当图1 重画（出图包里用\"本张例外\"改写统一设定第 2 条）；image_free = 图像模型直接画；render = 3D 渲染；photo = 实拍照片；screenshot = 真实界面截图；previous_shot = 取上一镜的帧。"
+            }
+          }
+        }
+      },
+      "mode": {
+        "type": "string",
+        "enum": ["first_last", "first", "ref", "still", "card", "footage"],
+        "description": "first_last = 给首帧和尾帧生成；first = 只给首帧生成；ref = 多参考生成：按时间排好的有序关键帧（首帧 + 中间帧 + 尾帧，可以不带视频），或关键帧加参考视频；这三个值和 scripts/video_api 的 --mode 一致。still = 不生成视频，用一张静帧（照片、真实截图、批准的关键帧）：在剪辑器之外先做成视频文件（循环成 N 秒；轻推、界面动画也在那一步做），再当素材接进 EDL；card = 剪辑层的纯色底字卡（EDL 的 card：纯色底 + 文字 + 小字），不能放产品图，以产品画面收尾时用生成的镜头加字幕（见 S06）；footage = 实拍、录屏、真实界面录屏，或按 pixel_source cad_render 直出的技术镜头。附带剪辑器只接视频文件，没有图片叠加和画中画。"
+      },
+      "transition_in": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["none", "cut", "dissolve", "dip_black", "dip_white", "flare", "whip", "bridge"],
+            "description": "从上一镜进入本镜的方式，和 EDL 的转场 kind 同名，可以直接写进 edit/edl.json。none 只用于第一个镜头。匹配剪辑、动作剪辑写 cut，在 reason 里说明对齐什么；闪白写 flare 或 dip_white。bridge = AI 过渡镜头，只在同一空间、同一时刻、画面里没有人脸时用（EDL 里另写 bridge 项和它的 fallback）。"
+          },
+          "duration": {"type": "number", "minimum": 0},
+          "reason": {"type": "string", "description": "为什么用这个转场。"}
+        }
+      },
+      "caption": {
+        "type": ["object", "null"],
+        "description": "本镜上屏文字的草稿，用来生成 edit/captions.json 的初稿；之后字幕只在 captions.json 里改，两边不一致时以 captions.json 为准。没有就写 null。文字必须先过合规检查。",
+        "required": ["text", "start", "end"],
+        "properties": {
+          "text": {"type": "string", "description": "用 \\n 换行。"},
+          "start": {"type": "number", "minimum": 0, "description": "相对本镜在成片里的开头，秒。"},
+          "end": {"type": "number", "description": "相对本镜在成片里的开头，秒。一行至少显示 2 秒，两行至少 3 秒。"},
+          "position": {"type": "string", "description": "auto = 剪辑时按画面留白选定（方法见 references/06-edit-type.md 第 6 节），选定后写进 edit/captions.json 的 pos；也可以写 top / bottom / left / right。"}
+        }
+      },
+      "sfx": {
+        "type": "array",
+        "description": "本镜的音效。id 对应 sound/sfx_cue_sheet.md；at 相对本镜在成片里的开头，秒。",
+        "items": {
+          "type": "object",
+          "required": ["id", "at"],
+          "properties": {
+            "id": {"type": "string"},
+            "at": {"type": "number", "minimum": 0},
+            "what": {"type": "string"}
+          }
+        }
+      },
+      "notes": {"type": "string"}
+    }
+  },
+  "shots": [
+    {
+      "id": "S01",
+      "beat": "hook",
+      "audience": "public",
+      "duration": 3.0,
+      "gen_duration": 4,
+      "pixel_source": "keyframe_video",
+      "camera": {"framing": "close-up, 30deg above, lid centered", "move": "push_in", "amount": "6%", "speed": "slow"},
+      "action": "一只手从画面右侧伸进来，食指轻点杯盖顶部，随即收回。",
+      "effect": {
+        "feature": "F1",
+        "source_part": "杯盖顶部中间的圆形小屏",
+        "looks_like": "白色数字亮起，亮度柔和，周围杯盖保持黑色",
+        "not": "不是一整圈灯带；杯身不发光；数字不是彩色",
+        "timing": "1.0-4.0s"
+      },
+      "product_state": {
+        "start": {"display": "off", "reminder_ring": "off", "lid": "closed"},
+        "end": {"display": "on", "reminder_ring": "off", "lid": "closed"}
+      },
+      "keyframes": [
+        {"id": "S01-K00", "role": "first", "source": "image_on_plate"},
+        {"id": "S01-K04", "role": "last", "source": "image_on_plate"}
+      ],
+      "mode": "first_last",
+      "transition_in": {"type": "none"},
+      "caption": {"text": "现在几度？", "start": 0.3, "end": 2.6, "position": "auto"},
+      "sfx": [
+        {"id": "FX01", "at": 0.9, "what": "finger tap on lid"},
+        {"id": "FX02", "at": 1.0, "what": "soft display tone"}
+      ],
+      "notes": "生成 4 秒，剪辑用 0.5-3.5 秒。开头 AI 标识：第 0–2.2 秒在画面上角叠一行\"本片含 AI 生成内容\"（edit/captions.json 的 ai_label_open，\"role\": \"label\"，anchor 改成 S01），和本镜字幕分放在画面两端；它不算阅读字幕，不参与字幕间隔检查。规则见 references/09-compliance.md 第 4.2 节。"
+    },
+    {
+      "id": "S02",
+      "beat": "reveal",
+      "audience": "public",
+      "duration": 3.5,
+      "gen_duration": 4,
+      "pixel_source": "keyframe_video",
+      "camera": {"framing": "medium shot, eye level, bottle on desk", "move": "orbit_left", "amount": "10deg", "speed": "slow"},
+      "action": "杯子立在办公桌上，旁边是一台合上的笔记本电脑和一小盆绿植，晨光从左侧窗户照进来。画面里没有人。",
+      "effect": null,
+      "product_state": {
+        "start": {"display": "on", "reminder_ring": "off", "lid": "closed"},
+        "end": {"display": "off", "reminder_ring": "off", "lid": "closed"}
+      },
+      "keyframes": [
+        {"id": "S02-K00", "role": "first", "source": "image_on_plate"},
+        {"id": "S02-K04", "role": "last", "source": "image_on_plate"}
+      ],
+      "mode": "first_last",
+      "transition_in": {"type": "cut", "duration": 0.0, "reason": "匹配剪辑：同一张桌子、同一时刻，从特写切到中景，杯子位置对齐"},
+      "caption": {"text": "X1 智能保温杯", "start": 0.5, "end": 3.2, "position": "auto"},
+      "sfx": [
+        {"id": "FX03", "at": 0.0, "what": "quiet morning office room tone"}
+      ]
+    },
+    {
+      "id": "S03",
+      "beat": "feature",
+      "audience": "public",
+      "duration": 4.0,
+      "gen_duration": 5,
+      "pixel_source": "keyframe_video",
+      "camera": {"framing": "close-up, 60deg above, lid fills upper half", "move": "static"},
+      "action": "午后，杯子放在桌上，没有人碰它。盖顶外圈的指示灯慢慢亮起、再关闭，重复 3 次。",
+      "effect": {
+        "feature": "F2",
+        "source_part": "杯盖顶部外圈的指示灯",
+        "looks_like": "一圈暖白色细光慢慢亮起，再关闭到和杯盖同色，重复 3 次，每次亮度相同",
+        "not": "不是闪光灯，不是彩虹色；杯身不发光；中间的小屏不亮",
+        "timing": "0.5-4.5s"
+      },
+      "product_state": {
+        "start": {"display": "off", "reminder_ring": "off", "lid": "closed"},
+        "end": {"display": "off", "reminder_ring": "off", "lid": "closed"}
+      },
+      "keyframes": [
+        {"id": "S03-K00", "role": "first", "source": "image_on_plate"}
+      ],
+      "mode": "first",
+      "transition_in": {"type": "dissolve", "duration": 0.4, "reason": "时间从早晨跳到午后"},
+      "caption": {"text": "到点了，\n它会提醒你喝水", "start": 0.8, "end": 3.8, "position": "auto"},
+      "sfx": [
+        {"id": "FX04", "at": 0.6, "what": "product reminder tone x3, in sync with the ring"}
+      ],
+      "notes": "灯的关闭是设计好的状态变化：提示词按 references/05-video-gen.md 第 3 节\"有意关灯\"一行写，词族扫描命中\"熄\"类词时确认后保留。"
+    },
+    {
+      "id": "S04",
+      "beat": "feature",
+      "audience": "public",
+      "duration": 3.5,
+      "pixel_source": "footage",
+      "camera": {"framing": "insert, full-frame screen recording of the real App, 9:16", "move": "static"},
+      "action": "真实 App 的饮水记录页：喝完水后，列表多出一条记录。",
+      "effect": {
+        "feature": "F4",
+        "source_part": "杯盖里的无线模块和手机 App",
+        "looks_like": "真实 App 录屏里饮水记录多出一条",
+        "not": "不画信号波纹从杯子飞向手机；不让视频模型生成界面",
+        "timing": "1.0-2.0s"
+      },
+      "product_state": {
+        "start": {"app_records": "n"},
+        "end": {"app_records": "n+1"}
+      },
+      "keyframes": [
+        {"id": "S04-UI1", "role": "ref", "source": "screenshot"},
+        {"id": "S04-UI2", "role": "ref", "source": "screenshot"}
+      ],
+      "mode": "footage",
+      "transition_in": {"type": "cut"},
+      "caption": {"text": "喝了多少，手机上都有记录", "start": 0.4, "end": 3.2, "position": "auto"},
+      "sfx": [],
+      "notes": "界面只用真实 App：竖屏录屏，或用真实截图在剪辑器之外做好的界面动画，导出成 9:16 视频放 footage/S04.mp4，EDL 里写 src。附带剪辑器只接视频文件，不做画中画和图片叠加；要把界面放进生成画面里的手机屏幕，就在合成软件里先做好再导出。这里故意不加手机通知音，免得观众以为是自己的手机响了。"
+    },
+    {
+      "id": "S05",
+      "beat": "lifestyle",
+      "audience": "public",
+      "duration": 3.0,
+      "gen_duration": 4,
+      "pixel_source": "keyframe_video",
+      "camera": {"framing": "medium close-up, from behind her right shoulder", "move": "push_in", "amount": "5%", "speed": "slow"},
+      "action": "会议间隙，一位女士背对镜头坐在窗边，拧开杯盖，把杯子举到嘴边。脸始终背对镜头或在画外。",
+      "effect": {
+        "feature": "F3",
+        "source_part": "杯身",
+        "looks_like": "杯口冒出很淡的热气，向上散开，约 1 秒内消失；手握杯身的姿态放松",
+        "not": "不是浓烟或沸腾的蒸汽；不画红色热浪；杯子不发光",
+        "timing": "1.2-2.6s"
+      },
+      "product_state": {
+        "start": {"display": "off", "reminder_ring": "off", "lid": "closed"},
+        "end": {"display": "off", "reminder_ring": "off", "lid": "open"}
+      },
+      "keyframes": [
+        {"id": "S05-K00", "role": "first", "source": "image_on_plate"},
+        {"id": "S05-K04", "role": "last", "source": "image_on_plate"}
+      ],
+      "mode": "first_last",
+      "transition_in": {"type": "dissolve", "duration": 0.4, "reason": "从界面录屏回到人和场景"},
+      "caption": null,
+      "sfx": [
+        {"id": "FX06", "at": 1.0, "what": "soft lid unscrew"}
+      ]
+    },
+    {
+      "id": "S06",
+      "beat": "end",
+      "audience": "public",
+      "duration": 3.0,
+      "gen_duration": 4,
+      "pixel_source": "keyframe_video",
+      "camera": {"framing": "packshot, product front centered on light background, upper half of the frame", "move": "static"},
+      "action": "浅色背景上，杯子正面居中，几乎不动，只有极轻的光线变化。下半部分留给名称、行动提示和说明小字。",
+      "effect": null,
+      "product_state": {
+        "start": {"display": "off", "reminder_ring": "off", "lid": "closed"},
+        "end": {"display": "off", "reminder_ring": "off", "lid": "closed"}
+      },
+      "keyframes": [
+        {"id": "S06-K00", "role": "first", "source": "image_on_plate"}
+      ],
+      "mode": "first",
+      "transition_in": {"type": "dissolve", "duration": 0.3, "reason": "收尾，节奏放慢"},
+      "caption": {"text": "X1 智能保温杯\n点击了解", "start": 0.0, "end": 3.0, "position": "bottom"},
+      "sfx": [],
+      "notes": "以产品画面收尾：由包装照式的关键帧生成一条近乎静止的镜头（Gate V 里结尾的静止是设计好的，不判定格），名称和行动提示是字幕；AI 说明小字用 edit/captions.json 的 end_note（\"preset\": \"note\"，\"role\": \"note\"，anchor S06）：画面由 AI 生成 · 部分功能为视觉示意（references/09-compliance.md 第 4.2 节）。EDL 的 card 只能做纯色底字卡，放不了产品图。全片不挂常驻角标。只留配乐收尾。"
+    }
+  ]
+}

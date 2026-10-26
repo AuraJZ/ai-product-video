@@ -1,0 +1,32 @@
+{
+ "_doc": "剪辑表模板：复制成项目的 edit/edl.json，同目录的其他模板分别复制成 edit/captions.json、edit/callouts.json、edit/approved_drafts.json、edit/approved_bridges.json。下面所有路径都相对项目根目录。字段说明见 scripts/edl_editor/README.md 第 4 节；以 _ 开头的键都是注释。先 --dry 看时间线，再渲染：uv run scripts/edl_editor/edit.py --project <项目> --edl edit/edl.json --dry；不加参数按 size 出片，--res 480 出同画幅的小预览，--size 1080x1920 另出别的画幅",
+ "fps": 24,
+ "size": [1920, 1080],
+ "_size_note": "成片画幅，剪辑器默认按它排版和出片。竖版项目写 [1080, 1920]：否则 --dry 会按横版排时间线和字幕位置（大部分素材是竖的时会警告）",
+ "label": "",
+ "_label_note": "角标默认不用：AI 标识放在开头字幕（edit/captions.json 的 ai_label_open）和片尾卡小字里。只有平台要求常驻标识时才在 label 里写文字，它会画在每一帧的角落",
+ "captions_file": "edit/captions.json",
+ "callouts_file": "edit/callouts.json",
+ "approved_drafts_file": "edit/approved_drafts.json",
+ "approved_bridges_file": "edit/approved_bridges.json",
+ "ledger_pattern": "gen/{id}/{task}",
+ "lint": {"banned_extra": []},
+ "_lint_note": "banned_extra 里补上 references/09-compliance.md 第 8 节的词表和本品类的功效词；--dry 时每条字幕和标注都会检查，只报警告",
+ "items": [
+  {"type": "transition", "kind": "dip_black", "dur": 0.6, "_note": "第一项之前的转场 = 从黑淡入"},
+  {"type": "card", "id": "title", "dur": 3.0, "fade": [0.0, 0.0], "_note": "文字在 edit/captions.json 的 cards 里；开头 AI 标识挂在这张卡上"},
+  {"type": "transition", "kind": "dissolve", "dur": 0.8},
+  {"type": "clip", "id": "S01", "src": "footage/S01.mp4", "in": 0.0, "out": 4.0,
+   "_note": "写了 src 就直接用这个文件（实拍、录屏等）。生成的镜头不写 src，从 edit/approved_drafts.json 取"},
+  {"type": "transition", "kind": "flare", "dur": 0.5},
+  {"type": "clip", "id": "S02", "in": 0.5, "out": 4.5, "portrait": {"focus": [0.4, 0.5]},
+   "_note": "不写 src：到 edit/approved_drafts.json 找批准版本；还没有就渲染成黑底提示画面。竖屏裁切时把窗口略向左移（次要镜头才这样裁，英雄镜头按 9:16 重新生成）"},
+  {"type": "bridge", "id": "B_S02_S03", "in": 0.04, "out": 2.0, "fallback": {"kind": "whip", "dur": 0.4, "dir": "left"},
+   "_note": "过渡镜头：edit/approved_bridges.json 里批准了就用，否则用 fallback 转场"},
+  {"type": "clip", "id": "S03", "in": 0.0, "out": 3.0, "hold_end": 4.0, "callouts": "S03",
+   "portrait": {"fit": "blur"}, "_note": "部件镜头：定格 4 秒，叠 edit/callouts.json 里的 S03 组；竖屏用模糊铺底保住完整画面。爆炸图、剖视图只放内部版"},
+  {"type": "transition", "kind": "dissolve", "dur": 0.8},
+  {"type": "card", "id": "end", "dur": 3.0, "fade": [0.6, 0.0], "_note": "片尾卡 note 写一次 AI 说明和音乐署名"},
+  {"type": "transition", "kind": "dip_black", "dur": 1.0, "_note": "最后一项之后的转场 = 淡出"}
+ ]
+}
